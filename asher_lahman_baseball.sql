@@ -1,98 +1,19 @@
-SELECT *
-FROM allstarfull;
-
-SELECT *
-FROM appearances;
-
-SELECT *
-FROM awardsmanagers;
-
-SELECT *
-FROM awardsplayers;
-
-SELECT *
-FROM awardssharemanagers
-
-SELECT *
-FROM awardsshareplayers;
-
-SELECT *
-FROM batting;
-
-SELECT *
-FROM battingpost;
-
-SELECT *
-FROM collegeplaying;
-
-SELECT *
-FROM fielding;
-
-SELECT *
-FROM fieldingof;
-
-SELECT *
-FROM fieldingofsplit;
-
-SELECT *
-FROM fieldingpost;
-
-SELECT *
-FROM halloffame;
-
-SELECT *
-FROM homegames
-ORDER BY year DESC;
-
-SELECT *
-FROM managers;
-
-SELECT *
-FROM managershalf;
-
-SELECT *
-FROM parks;
-
-SELECT *
-FROM people;
-
-SELECT *
-FROM pitching;
-
-SELECT *
-FROM pitchingpost;
-
-SELECT *
-FROM salaries;
-
-SELECT *
-FROM schools;
-
-SELECT *
-FROM seriespost;
-
-SELECT *
-FROM teams;
-
-SELECT *
-FROM teamsfranchises;
-
-SELECT *
-FROM teamshalf;
-
-
-
-
 -- 1. What range of years for baseball games played does the provided database cover? 
 SELECT MIN(year) AS first_year, 
        MAX(year) AS last_year
 FROM homegames;
 
 -- 2. Find the name and height of the shortest player in the database. How many games did he play in? What is the name of the team for which he played?
-   SELECT *
-   FROM people
-   	LEFT JOIN appearances USING (playerid)
-	LEFT JOIN teams ON appearances.teamid = teams.teamid;
+   WITH shortest AS(
+   	SELECT *
+   	FROM people
+   		LEFT JOIN appearances USING (playerid)
+	ORDER BY height
+	LIMIT 1)
+	SELECT name AS team, SUM(g) AS total_games_played
+	FROM shortest
+	LEFT JOIN teams ON shortest.teamid = teams.teamid
+	GROUP BY name;
 	
 -- 3. Find all players in the database who played at Vanderbilt University. 
 SELECT DISTINCT(playerid), schoolname
@@ -149,7 +70,7 @@ SELECT CASE
 			ROUND(SUM(so)::numeric/SUM(g)::numeric, 2)
 FROM pitching
 GROUP BY decades
-ORDER BY decades DESC NULLS LAST; AS so_per_gp;
+ORDER BY decades DESC NULLS LAST; 
 
 SELECT CASE
 			WHEN yearid BETWEEN 1920 AND 1929 THEN '1920s'
@@ -171,17 +92,16 @@ ORDER BY decades DESC NULLS LAST;
 --6. Find the player who had the most success stealing bases in 2016, where __success__ is measured as the percentage of stolen base attempts which are successful. (A stolen base attempt results either in a stolen base or being caught stealing.) Consider only players who attempted _at least_ 20 stolen bases.
 
 --7.  From 1970 – 2016, what is the largest number of wins for a team that did not win the world series? 
-SELECT yearid,teamid,w,WSWin
+SELECT yearid AS year,teamid AS team,w AS wins,WSWin AS world_series_win
 FROM teams
 WHERE yearid BETWEEN 1970 AND 2016
 	AND wswin = 'N'
 ORDER BY w DESC
--- LIMIT 1;
+LIMIT 1;
 -- What is the smallest number of wins for a team that did win the world series? 
 SELECT yearid, teamid, w,WSWin
 FROM teams
---WHERE yearid BETWEEN 1970 AND 2016
-	WHERE wswin = 'Y'
+WHERE wswin = 'Y'
 ORDER BY w
 LIMIT 1;
 -- Doing this will probably result in an unusually small number of wins for a world series champion – determine why this is the case.
@@ -221,9 +141,7 @@ final_table AS(
 	SELECT most_wins_wsw::numeric AS most_wins_wsw
 	FROM first_final_table)
 
-SELECT *
-FROM final_table
-SELECT SUM(most_wins_wsw) AS max_season_and_wsw_count
+SELECT SUM(most_wins_wsw) AS most_wins_and_wsw_count
 FROM final_table;
 
 -- What percentage of the time?
@@ -253,7 +171,7 @@ final_table AS(
 	SELECT most_wins_wsw::numeric AS most_wins_wsw
 	FROM first_final_table)
 
-SELECT ROUND(SUM(most_wins_wsw)*100/COUNT(*),2) AS percent_max_season_and_wsw_count
+SELECT ROUND(SUM(most_wins_wsw)*100/COUNT(*),2)||'%' AS percent_most_wins_and_wsw_count
 FROM final_table;
 
 -- 8. Using the attendance figures from the homegames table, find the teams and parks which had the top 5 average attendance per game in 2016 
@@ -305,21 +223,16 @@ ORDER BY yearid DESC;
 -- 10. Find all players who hit their career highest number of home runs in 2016. 
 -- Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. 
 -- Report the players' first and last names and the number of home runs they hit in 2016.
-SELECT DISTINCT(yearid), playerid, SUM(hr)
-FROM batting
-GROUP BY yearid, playerid
-ORDER BY playerid, yearid
+
 -- **Open-ended questions**
 
 -- 11. Is there any correlation between number of wins and team salary? Use data from 2000 and later to answer this question. As you do this analysis, keep in mind that salaries across the whole league tend to increase together, so you may want to look on a year-by-year basis.
 
 -- 12. In this question, you will explore the connection between number of wins and attendance.
-    <ol type="a">
-      <li>Does there appear to be any correlation between attendance at home games and number of wins? </li>
-      <li>Do teams that win the world series see a boost in attendance the following year? What about teams that made the playoffs? Making the playoffs means either being a division winner or a wild card winner.</li>
-    </ol>
+-- Does there appear to be any correlation between attendance at home games and number of wins?
+-- Do teams that win the world series see a boost in attendance the following year? What about teams that made the playoffs? 
 
 
-13. It is thought that since left-handed pitchers are more rare, causing batters to face them less often, that they are more effective. Investigate this claim and present evidence to either support or dispute this claim. First, determine just how rare left-handed pitchers are compared with right-handed pitchers. Are left-handed pitchers more likely to win the Cy Young Award? Are they more likely to make it into the hall of fame?
+-- 13. It is thought that since left-handed pitchers are more rare, causing batters to face them less often, that they are more effective. Investigate this claim and present evidence to either support or dispute this claim. First, determine just how rare left-handed pitchers are compared with right-handed pitchers. Are left-handed pitchers more likely to win the Cy Young Award? Are they more likely to make it into the hall of fame?
 
   
